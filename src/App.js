@@ -1,67 +1,70 @@
-import axios from "axios";
-import "bootstrap/dist/css/bootstrap.min.css"
-import { useEffect, useState } from "react";
-import './App.css';
+import React, { useState } from 'react';
+import './index.css';
+
+
+const api = {
+  key: "35c40f8301edb47a0de39cefd0354982",
+  base: "https://api.openweathermap.org/data/2.5/"
+}
 
 function App() {
+  const [query, setQuery] = useState('');
+  const [weather, setWeather] = useState({});
 
-
-  const apiKey = "f56f24967aaf51182d1d4df628297c6d"
-  const [inputCity, setInputCity] = useState("")
-  const [data, setData] = useState({})
-
-
-  const getWetherDetails = (cityName) => {
-    if (!cityName) return
-    const apiURL = "https://api.openweathermap.org/data/2.5/weather?q=" + cityName + "&appid=" + apiKey
-    axios.get(apiURL).then((res) => {
-      console.log("response", res.data)
-      setData(res.data)
-    }).catch((err) => {
-      console.log("err", err)
-    })
+  const search = evt => {
+    if (evt.key === "Enter") {
+      fetch(`${api.base}weather?q=${query}&units=metric&APPID=${api.key}`)
+        .then(res => res.json())
+        .then(result => {
+          setWeather(result);
+          setQuery('');
+          console.log(result);
+        });
+    }
   }
 
-  const handleChangeInput = (e) => {
-    console.log("value", e.target.value)
-    setInputCity(e.target.value)
-  }
+  const dateBuilder = (d) => {
+    let months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    let days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 
-  const handleSearch = () => {
-    getWetherDetails(inputCity)
-  }
+    let day = days[d.getDay()];
+    let date = d.getDate();
+    let month = months[d.getMonth()];
+    let year = d.getFullYear();
 
+    return `${day} ${date} ${month} ${year}`
+  }
 
   return (
-    <div className="col-md-12">
-      <div className="wetherBg">
-        <h1 className="heading">Weather App</h1>
-
-        <div className="d-grid gap-3 col-4 mt-4">
-          <input type="text" className="form-control"
-            value={inputCity}
-            onChange={handleChangeInput} />
-          <button className="btn btn-primary" type="button"
-            onClick={handleSearch}
-          >Search</button>
+    <div className={`app ${typeof weather.main !== "undefined" ? (weather.main.temp > 16 ? 'warm' : '') : ''}`}>
+      <main>
+        <div className="search-box">
+          <input 
+            type="text"
+            className="search-bar"
+            placeholder="Search..."
+            onChange={e => setQuery(e.target.value)}
+            value={query}
+            onKeyPress={search}
+          />
         </div>
-      </div>
+        {typeof weather.main !== "undefined" ? (
+          <div className="weather-info"> {/* Add the 'weather-info' class to the weather info div */}
+            <div className="location-box">
+              <div className="location">{weather.name}, {weather.sys.country}</div>
+              <div className="date">{dateBuilder(new Date())}</div>
+            </div>
+            <div className="weather-box">
+              <div className="temp">
+                {Math.round(weather.main.temp)}°c
+              </div>
+              <div className="weather">{weather.weather[0].main}</div>
+            </div>
 
-      {Object.keys(data).length > 0 &&
-        <div className="col-md-12 text-center mt-5">
-
-          <div className="shadow rounded wetherResultBox">
-            <img className="weathorIcon"
-              src="https://i.pinimg.com/originals/77/0b/80/770b805d5c99c7931366c2e84e88f251.png" />
-
-            <h5 className="weathorCity">
-              {data?.name}
-            </h5>
-            <h6 className="weathorTemp">{((data?.main?.temp) - 273.15).toFixed(2)}°C</h6>
+            <img className="weather-icon" src={require('./assets/weather.png')} alt="Weather Icon" />
           </div>
-        </div>
-      }
-
+        ) : ('')}
+      </main>
     </div>
   );
 }
